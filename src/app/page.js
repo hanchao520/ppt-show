@@ -3,10 +3,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  // ===== PPT 图片列表：当前一共 14 页 =====
+  // ===== 多个 PPT 项目配置 =====
+  const projects = [
+    {
+      id: "01",
+      title: "挑战杯项目",
+      desc: "网页演示系统展示",
+      slideCount: 14,
+    },
+    {
+      id: "02",
+      title: "2026年第一届礼博士大健康论坛动员大会",
+      desc: "数字文旅项目展示",
+      slideCount: 30,
+    },
+    {
+      id: "03",
+      title: "BIM建筑生命周期",
+      desc: "建筑数字化项目展示",
+      slideCount: 18,
+    },
+  ];
+
+  // ===== 当前选中的 PPT 项目 =====
+  const [activeProject, setActiveProject] = useState(projects[0]);
+
+  // ===== 根据当前项目自动生成图片路径 =====
   const slides = Array.from(
-    { length: 14 },
-    (_, i) => `/slides/slide${i + 1}.png`
+    { length: activeProject.slideCount },
+    (_, i) => `/projects/${activeProject.id}/slide${i + 1}.png`
   );
 
   // ===== 基础状态 =====
@@ -256,7 +281,7 @@ export default function Home() {
 
               <div className="relative rounded-[18px] md:rounded-[24px] overflow-hidden bg-black border border-white/10">
                 <img
-                  src="/slides/slide1.png"
+                  src={`/projects/${activeProject.id}/slide1.png`}
                   className="w-full object-cover"
                   alt="项目预览"
                 />
@@ -274,6 +299,87 @@ export default function Home() {
           </div>
         </section>
 
+{/* 作品选择区：点击不同项目，切换不同 PPT */}
+<section className="relative z-10 px-6 md:px-16 py-20 md:py-28 border-t border-white/10">
+  <div className="max-w-6xl mx-auto">
+    <div className="mb-12">
+      <div className="text-blue-300 tracking-[6px] text-sm mb-4">
+        PROJECT GALLERY
+      </div>
+
+      <h2 className="text-3xl md:text-5xl font-black">
+        作品展示
+      </h2>
+
+      <p className="mt-5 text-white/60 leading-8 max-w-3xl">
+        选择一个 PPT 项目进入在线展示。每个作品都支持全屏播放、键盘翻页、手机横屏观看与答辩模式。
+      </p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {projects.map((project, index) => (
+        <div
+          key={project.id}
+          className={`group rounded-3xl border p-4 backdrop-blur-xl transition hover:-translate-y-2 ${
+            activeProject.id === project.id
+              ? "bg-blue-500/15 border-blue-300/50"
+              : "bg-white/8 border-white/15"
+          }`}
+        >
+          <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10">
+            <img
+              src={`/projects/${project.id}/slide1.png`}
+              className="w-full aspect-video object-cover group-hover:scale-105 transition duration-500"
+              alt={project.title}
+            />
+
+            <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white/80">
+              作品 {String(index + 1).padStart(2, "0")}
+            </div>
+
+            <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white/80">
+              {project.slideCount} 页
+            </div>
+          </div>
+
+          <div className="pt-5">
+            <h3 className="text-2xl font-bold">
+              {project.title}
+            </h3>
+
+            <p className="mt-3 text-white/60 leading-7">
+              {project.desc}
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={() => {
+                  setActiveProject(project);
+                  setCurrent(0);
+                  startPresentation();
+                }}
+                className="px-5 py-2 rounded-full bg-white text-black font-bold text-sm hover:scale-105 transition"
+              >
+                普通展示
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveProject(project);
+                  setCurrent(0);
+                  startDefenseMode();
+                }}
+                className="px-5 py-2 rounded-full bg-blue-400 text-black font-bold text-sm hover:scale-105 transition"
+              >
+                答辩模式
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
         {/* 项目简介区 */}
         <section className="relative z-10 px-6 md:px-16 py-20 md:py-28 border-t border-white/10">
           <div className="max-w-6xl mx-auto">
