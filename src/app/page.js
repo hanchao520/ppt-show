@@ -1,30 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const slides = Array.from({ length: 14 }, (_, i) => `/slides/slide${i + 1}.png`);
+  const slides = Array.from(
+    { length: 14 },
+    (_, i) => `/slides/slide${i + 1}.png`
+  );
 
   const [current, setCurrent] = useState(0);
   const [autoPlay, setAutoPlay] = useState(false);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
-  
 
-  const nextSlide = () => {
+  const touchStartX = useRef(0);
+
+  const nextSlide = useCallback(() => {
     setCurrent((prev) => Math.min(prev + 1, slides.length - 1));
-  };
+  }, [slides.length]);
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     setCurrent((prev) => Math.max(prev - 1, 0));
-  };
+  }, []);
 
-  const goFullScreen = () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      document.documentElement.requestFullscreen();
+  const goFullScreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      console.log("当前设备暂不支持全屏模式");
     }
   };
 
@@ -34,24 +42,26 @@ export default function Home() {
     setTimeout(() => {
       setStarted(true);
       setLoading(false);
-    }, 1600);
+    }, 1400);
   };
 
   useEffect(() => {
-  const checkOrientation = () => {
-    setIsPortrait(window.innerHeight > window.innerWidth && window.innerWidth < 768);
-  };
+    const checkOrientation = () => {
+      setIsPortrait(
+        window.innerHeight > window.innerWidth && window.innerWidth < 768
+      );
+    };
 
-  checkOrientation();
+    checkOrientation();
 
-  window.addEventListener("resize", checkOrientation);
-  window.addEventListener("orientationchange", checkOrientation);
+    window.addEventListener("resize", checkOrientation);
+    window.addEventListener("orientationchange", checkOrientation);
 
-  return () => {
-    window.removeEventListener("resize", checkOrientation);
-    window.removeEventListener("orientationchange", checkOrientation);
-  };
-}, []);
+    return () => {
+      window.removeEventListener("resize", checkOrientation);
+      window.removeEventListener("orientationchange", checkOrientation);
+    };
+  }, []);
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -65,7 +75,7 @@ export default function Home() {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [started]);
+  }, [started, nextSlide, prevSlide]);
 
   useEffect(() => {
     if (!autoPlay || !started) return;
@@ -78,7 +88,19 @@ export default function Home() {
     }, 4000);
 
     return () => clearInterval(timer);
-  }, [autoPlay, started]);
+  }, [autoPlay, started, slides.length]);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const distance = touchStartX.current - touchEndX;
+
+    if (distance > 50) nextSlide();
+    if (distance < -50) prevSlide();
+  };
 
   if (loading) {
     return (
@@ -86,18 +108,18 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#1d4ed8_0%,transparent_38%)] opacity-30" />
         <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(59,130,246,0.12),transparent)] animate-scan" />
 
-        <div className="relative z-10 text-center">
+        <div className="relative z-10 text-center px-6">
           <div className="mx-auto w-20 h-20 rounded-full border-4 border-blue-400/30 border-t-blue-400 animate-spin" />
 
-          <h2 className="mt-8 text-3xl font-bold tracking-[8px]">
+          <h2 className="mt-8 text-2xl md:text-3xl font-bold tracking-[6px] md:tracking-[8px]">
             正在进入展示
           </h2>
 
-          <p className="mt-4 text-blue-200 tracking-[4px]">
+          <p className="mt-4 text-blue-200 tracking-[3px] md:tracking-[4px]">
             PRESENTATION LOADING
           </p>
 
-          <div className="mt-10 w-80 h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="mt-10 w-72 md:w-80 h-2 bg-white/10 rounded-full overflow-hidden">
             <div className="h-full bg-blue-400 animate-loadingBar" />
           </div>
         </div>
@@ -107,18 +129,18 @@ export default function Home() {
 
   if (!started) {
     return (
-      <main className="w-full h-screen bg-[#020817] text-white overflow-hidden relative">
+      <main className="w-full min-h-screen bg-[#020817] text-white overflow-x-hidden relative">
         {/* 背景光效 */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(37,99,235,0.35),transparent_30%),radial-gradient(circle_at_80%_70%,rgba(14,165,233,0.25),transparent_35%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:60px_60px]" />
 
         {/* 顶部导航 */}
-        <header className="relative z-10 flex items-center justify-between px-16 py-8">
+        <header className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 md:px-16 py-6 md:py-8">
           <div>
-            <div className="text-sm text-blue-300 tracking-[6px]">
+            <div className="text-xs md:text-sm text-blue-300 tracking-[4px] md:tracking-[6px]">
               WEB PRESENTATION
             </div>
-            <div className="mt-2 text-xl font-semibold">
+            <div className="mt-2 text-lg md:text-xl font-semibold">
               PPT SHOWCASE SYSTEM
             </div>
           </div>
@@ -129,14 +151,15 @@ export default function Home() {
         </header>
 
         {/* 主体 */}
-        <section className="relative z-10 h-[calc(100vh-120px)] flex items-center px-16">
-          <div className="w-1/2">
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-blue-400/40 bg-blue-500/10 text-blue-200 mb-8">
+        <section className="relative z-10 min-h-[calc(100vh-120px)] flex flex-col md:flex-row items-center px-6 md:px-16 py-8 md:py-0 gap-10">
+          {/* 左侧文案 */}
+          <div className="w-full md:w-1/2">
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-blue-400/40 bg-blue-500/10 text-blue-200 mb-8 text-sm md:text-base">
               <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
               已部署上线 · 可在线访问
             </div>
 
-            <h1 className="text-7xl font-black leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black leading-tight">
               挑战杯项目
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-200">
@@ -144,60 +167,70 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="mt-8 text-xl leading-10 text-white/70 max-w-2xl">
+            <p className="mt-6 md:mt-8 text-base md:text-xl leading-8 md:leading-10 text-white/70 max-w-2xl">
               将传统 PPT 升级为网页演示系统，支持全屏播放、键盘翻页、
-              自动播放、进度展示与线上分享，让项目汇报更正式、更高级。
+              手机横屏观看、自动播放、进度展示与线上分享，让项目汇报更正式、更高级。
             </p>
 
-            <div className="mt-12 flex items-center gap-5">
+            <div className="mt-8 md:mt-12 flex flex-wrap items-center gap-4 md:gap-5">
               <button
                 onClick={startPresentation}
-                className="px-10 py-4 rounded-full bg-white text-black font-bold text-lg hover:scale-105 transition"
+                className="px-8 md:px-10 py-3 md:py-4 rounded-full bg-white text-black font-bold text-base md:text-lg hover:scale-105 transition"
               >
                 进入展示
               </button>
 
               <button
                 onClick={goFullScreen}
-                className="px-10 py-4 rounded-full border border-white/30 text-white font-bold text-lg hover:bg-white/10 transition"
+                className="px-8 md:px-10 py-3 md:py-4 rounded-full border border-white/30 text-white font-bold text-base md:text-lg hover:bg-white/10 transition"
               >
                 全屏模式
               </button>
             </div>
 
-            <div className="mt-12 flex gap-10 text-white/60">
+            <div className="mt-8 md:mt-12 flex flex-wrap gap-8 md:gap-10 text-white/60">
               <div>
-                <div className="text-4xl font-bold text-white">14</div>
-                <div className="mt-2">展示页数</div>
+                <div className="text-3xl md:text-4xl font-bold text-white">
+                  14
+                </div>
+                <div className="mt-2 text-sm md:text-base">展示页数</div>
               </div>
 
               <div>
-                <div className="text-4xl font-bold text-white">Next.js</div>
-                <div className="mt-2">开发框架</div>
+                <div className="text-3xl md:text-4xl font-bold text-white">
+                  Next.js
+                </div>
+                <div className="mt-2 text-sm md:text-base">开发框架</div>
               </div>
 
               <div>
-                <div className="text-4xl font-bold text-white">Vercel</div>
-                <div className="mt-2">线上部署</div>
+                <div className="text-3xl md:text-4xl font-bold text-white">
+                  Vercel
+                </div>
+                <div className="mt-2 text-sm md:text-base">线上部署</div>
               </div>
             </div>
           </div>
 
           {/* 右侧预览卡片 */}
-          <div className="w-1/2 flex justify-center">
-            <div className="relative w-[680px] rounded-[32px] bg-white/10 border border-white/20 p-4 shadow-2xl backdrop-blur-xl">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-300 rounded-[36px] blur-2xl opacity-30" />
+          <div className="w-full md:w-1/2 flex justify-center">
+            <div className="relative w-full max-w-[680px] rounded-[24px] md:rounded-[32px] bg-white/10 border border-white/20 p-3 md:p-4 shadow-2xl backdrop-blur-xl">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-300 rounded-[28px] md:rounded-[36px] blur-2xl opacity-30" />
 
-              <div className="relative rounded-[24px] overflow-hidden bg-black border border-white/10">
+              <div className="relative rounded-[18px] md:rounded-[24px] overflow-hidden bg-black border border-white/10">
                 <img
                   src="/slides/slide1.png"
                   className="w-full object-cover"
                   alt="项目预览"
                 />
 
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/60 backdrop-blur-md rounded-full px-5 py-3">
-                  <span className="text-sm text-white/80">Preview</span>
-                  <span className="text-sm text-white/80">1 / {slides.length}</span>
+                <div className="absolute bottom-3 md:bottom-4 left-3 md:left-4 right-3 md:right-4 flex items-center justify-between bg-black/60 backdrop-blur-md rounded-full px-4 md:px-5 py-2 md:py-3">
+                  <span className="text-xs md:text-sm text-white/80">
+                    Preview
+                  </span>
+                  <span className="text-xs md:text-sm text-white/80">
+                    1 / {slides.length}
+                  </span>
                 </div>
               </div>
             </div>
@@ -208,24 +241,35 @@ export default function Home() {
   }
 
   return (
-    <main className="w-full h-screen bg-black flex items-center justify-center relative overflow-hidden">
+    <main
+      className="w-full h-screen bg-black flex items-center justify-center relative overflow-hidden select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* 手机竖屏提示 */}
       {isPortrait && (
-  <div className="absolute inset-0 z-50 bg-black text-white flex flex-col items-center justify-center px-8 text-center">
-    <div className="text-6xl mb-8">📱</div>
+        <div className="absolute inset-0 z-50 bg-black text-white flex flex-col items-center justify-center px-8 text-center">
+          <div className="text-6xl mb-8">📱</div>
 
-    <h2 className="text-3xl font-bold mb-4">
-      请横屏观看
-    </h2>
+          <h2 className="text-3xl font-bold mb-4">请横屏观看</h2>
 
-    <p className="text-white/70 leading-8">
-      当前 PPT 为 16:9 横屏比例，横屏观看可以获得最佳展示效果。
-    </p>
+          <p className="text-white/70 leading-8">
+            当前 PPT 为 16:9 横屏比例，横屏观看可以获得最佳展示效果。
+          </p>
 
-    <div className="mt-10 w-24 h-14 border-2 border-white/60 rounded-xl flex items-center justify-center rotate-90">
-      <div className="w-2 h-2 bg-white rounded-full" />
-    </div>
-  </div>
-)}
+          <div className="mt-10 w-24 h-14 border-2 border-white/60 rounded-xl flex items-center justify-center rotate-90">
+            <div className="w-2 h-2 bg-white rounded-full" />
+          </div>
+
+          <button
+            onClick={() => setStarted(false)}
+            className="mt-12 px-8 py-3 rounded-full border border-white/30 text-white"
+          >
+            返回首页
+          </button>
+        </div>
+      )}
+
       {/* 当前PPT */}
       <img
         key={current}
@@ -237,7 +281,7 @@ export default function Home() {
       {/* 返回入口页 */}
       <button
         onClick={() => setStarted(false)}
-        className="absolute top-6 left-6 bg-black/50 text-white px-5 py-2 rounded-full backdrop-blur-md hover:bg-white/20 transition"
+        className="absolute top-4 md:top-6 left-4 md:left-6 bg-black/50 text-white px-4 md:px-5 py-2 rounded-full backdrop-blur-md hover:bg-white/20 transition text-sm md:text-base"
       >
         返回首页
       </button>
@@ -245,7 +289,7 @@ export default function Home() {
       {/* 左翻页 */}
       <button
         onClick={prevSlide}
-        className="absolute left-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-7xl"
+        className="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-7xl"
       >
         ‹
       </button>
@@ -253,13 +297,13 @@ export default function Home() {
       {/* 右翻页 */}
       <button
         onClick={nextSlide}
-        className="absolute right-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-7xl"
+        className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-7xl"
       >
         ›
       </button>
 
       {/* 底部控制栏 */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-6">
+      <div className="absolute bottom-5 md:bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md text-white px-4 md:px-6 py-3 rounded-full flex items-center gap-3 md:gap-6 text-xs md:text-base whitespace-nowrap">
         <button onClick={prevSlide}>上一页</button>
 
         <span>
@@ -272,9 +316,7 @@ export default function Home() {
           {autoPlay ? "暂停" : "自动播放"}
         </button>
 
-        <button onClick={goFullScreen}>
-          全屏
-        </button>
+        <button onClick={goFullScreen}>全屏</button>
       </div>
 
       {/* 进度条 */}
