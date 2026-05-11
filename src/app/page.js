@@ -9,6 +9,8 @@ export default function Home() {
   const [autoPlay, setAutoPlay] = useState(false);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+  
 
   const nextSlide = () => {
     setCurrent((prev) => Math.min(prev + 1, slides.length - 1));
@@ -34,6 +36,22 @@ export default function Home() {
       setLoading(false);
     }, 1600);
   };
+
+  useEffect(() => {
+  const checkOrientation = () => {
+    setIsPortrait(window.innerHeight > window.innerWidth && window.innerWidth < 768);
+  };
+
+  checkOrientation();
+
+  window.addEventListener("resize", checkOrientation);
+  window.addEventListener("orientationchange", checkOrientation);
+
+  return () => {
+    window.removeEventListener("resize", checkOrientation);
+    window.removeEventListener("orientationchange", checkOrientation);
+  };
+}, []);
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -191,6 +209,23 @@ export default function Home() {
 
   return (
     <main className="w-full h-screen bg-black flex items-center justify-center relative overflow-hidden">
+      {isPortrait && (
+  <div className="absolute inset-0 z-50 bg-black text-white flex flex-col items-center justify-center px-8 text-center">
+    <div className="text-6xl mb-8">📱</div>
+
+    <h2 className="text-3xl font-bold mb-4">
+      请横屏观看
+    </h2>
+
+    <p className="text-white/70 leading-8">
+      当前 PPT 为 16:9 横屏比例，横屏观看可以获得最佳展示效果。
+    </p>
+
+    <div className="mt-10 w-24 h-14 border-2 border-white/60 rounded-xl flex items-center justify-center rotate-90">
+      <div className="w-2 h-2 bg-white rounded-full" />
+    </div>
+  </div>
+)}
       {/* 当前PPT */}
       <img
         key={current}
