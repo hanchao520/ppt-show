@@ -23,6 +23,12 @@ export default function Home() {
       desc: "建筑数字化项目展示",
       slideCount: 18,
     },
+     {
+      id: "04",
+      title: "百步梯2026美妆日化创新科技论坛PPT",
+      desc: "科技论坛项目展示",
+      slideCount: 13,
+    },
   ];
 
   // ===== 当前选中的 PPT 项目 =====
